@@ -1,0 +1,2073 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAD HOURS TRACKER & NUTRITION HUB</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              orange: '#f97316',
+              'orange-dark': '#ea580c',
+              emerald: '#10b981',
+              dark: '#0f172a',
+              card: '#1e293b',
+              border: '#334155'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #f97316;
+    }
+
+    /* Pulse glow effects */
+    .glow-orange {
+      box-shadow: 0 0 25px -5px rgba(249, 115, 22, 0.35);
+    }
+    .glow-emerald {
+      box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.35);
+    }
+    .pulse-subtle {
+      animation: pulseSubtle 2s infinite;
+    }
+    @keyframes pulseSubtle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.92; transform: scale(1.015); }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-orange-500 selection:text-white">
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Brand Logo -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+            <i data-lucide="flame" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <span class="font-extrabold tracking-tight text-lg text-white">DAD HOURS</span>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20">TRACKER</span>
+            </div>
+            <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Minimal Time • Max Intensity</p>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs Desktop -->
+        <nav class="hidden md:flex items-center space-x-1 bg-slate-950/60 p-1.5 rounded-xl border border-slate-800">
+          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all text-white bg-orange-500 shadow-sm shadow-orange-500/20">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+            <span>WOD Semanal</span>
+          </button>
+          <button onclick="switchTab('timer')" id="nav-timer" class="tab-btn flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+            <i data-lucide="timer" class="w-4 h-4"></i>
+            <span>Cronómetro WOD</span>
+          </button>
+          <button onclick="switchTab('history')" id="nav-history" class="tab-btn flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+            <i data-lucide="trophy" class="w-4 h-4"></i>
+            <span>Marcas & PRs</span>
+          </button>
+          <button onclick="switchTab('nutrition')" id="nav-nutrition" class="tab-btn flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+            <i data-lucide="utensils" class="w-4 h-4"></i>
+            <span>Guía Nutricional</span>
+          </button>
+        </nav>
+
+        <!-- Right Quick Actions -->
+        <div class="flex items-center space-x-2">
+          <button onclick="openLogModal()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Anotar Marca</span>
+          </button>
+
+          <button onclick="openBackupModal()" title="Copias de Seguridad" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800 transition-all">
+            <i data-lucide="database" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Nav Bar (Bottom pinned) -->
+    <div class="md:hidden flex items-center justify-around py-2 bg-slate-900 border-t border-slate-800">
+      <button onclick="switchTab('dashboard')" id="mob-nav-dashboard" class="flex flex-col items-center text-[10px] text-orange-400 font-semibold p-1">
+        <i data-lucide="layout-dashboard" class="w-5 h-5 mb-0.5"></i>
+        <span>WODs</span>
+      </button>
+      <button onclick="switchTab('timer')" id="mob-nav-timer" class="flex flex-col items-center text-[10px] text-slate-400 font-medium p-1">
+        <i data-lucide="timer" class="w-5 h-5 mb-0.5"></i>
+        <span>Timer</span>
+      </button>
+      <button onclick="switchTab('history')" id="mob-nav-history" class="flex flex-col items-center text-[10px] text-slate-400 font-medium p-1">
+        <i data-lucide="trophy" class="w-5 h-5 mb-0.5"></i>
+        <span>Marcas</span>
+      </button>
+      <button onclick="switchTab('nutrition')" id="mob-nav-nutrition" class="flex flex-col items-center text-[10px] text-slate-400 font-medium p-1">
+        <i data-lucide="utensils" class="w-5 h-5 mb-0.5"></i>
+        <span>Nutrición</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Application Body -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: DASHBOARD DE ENTRENAMIENTO (DAD WOD) -->
+    <!-- ========================================== -->
+    <div id="tab-dashboard" class="tab-content space-y-6">
+      
+      <!-- Top Banner Summary -->
+      <div class="bg-gradient-to-r from-slate-900 via-slate-800/80 to-slate-900 border border-slate-800 rounded-2xl p-6 relative overflow-hidden shadow-xl">
+        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <div class="space-y-2">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-semibold">
+              <span class="w-2 h-2 rounded-full bg-orange-500 animate-ping"></span>
+              <span>FILOSOFÍA DAD HOURS • 15 A 25 MINUTOS MÁXIMO</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Programación Semanal de Alto Retorno</h1>
+            <p class="text-slate-400 text-sm max-w-2xl leading-relaxed">
+              5 sesiones funcionales de alta densidad y 2 de recuperación. Consistencia innegociable con mínima inversión de tiempo para máxima retención muscular y potencia glucolítica.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <button onclick="startTodaysWod()" class="px-5 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold text-sm flex items-center space-x-2 shadow-lg shadow-orange-500/25 transition-all">
+              <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+              <span>Entrenar WOD de Hoy</span>
+            </button>
+            <button onclick="openLogModal()" class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-sm flex items-center space-x-2 transition-all">
+              <i data-lucide="pen-tool" class="w-4 h-4"></i>
+              <span>Registrar Sesión</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Weekly Quick Stats Bar -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-800/80">
+          <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+            <div class="text-[11px] font-semibold text-slate-400 uppercase">WODs Esta Semana</div>
+            <div id="stat-week-wods" class="text-xl font-black text-orange-400 mt-1">0 / 5</div>
+          </div>
+          <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+            <div class="text-[11px] font-semibold text-slate-400 uppercase">Minutos Entrenados</div>
+            <div id="stat-total-mins" class="text-xl font-black text-white mt-1">0 min</div>
+          </div>
+          <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+            <div class="text-[11px] font-semibold text-slate-400 uppercase">Récords (PRs)</div>
+            <div id="stat-total-prs" class="text-xl font-black text-emerald-400 mt-1">0</div>
+          </div>
+          <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+            <div class="text-[11px] font-semibold text-slate-400 uppercase">RPE Promedio</div>
+            <div id="stat-avg-rpe" class="text-xl font-black text-amber-400 mt-1">0.0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly Cards Grid (7 Days) -->
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+            <i data-lucide="calendar" class="w-5 h-5 text-orange-400"></i>
+            <span>Microciclo Semanal (Lunes a Domingo)</span>
+          </h2>
+          <span class="text-xs text-slate-400 font-medium">Haz clic en cualquier día para cargar su temporizador</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="weekly-wod-cards">
+          <!-- Dynamically populated via JavaScript -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: TEMPORIZADOR WOD EN VIVO (TIMER)   -->
+    <!-- ========================================== -->
+    <div id="tab-timer" class="tab-content hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        
+        <!-- Timer Header & Mode Switcher -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+          <div>
+            <h2 class="text-xl font-extrabold text-white flex items-center space-x-2">
+              <i data-lucide="timer" class="w-5 h-5 text-orange-500"></i>
+              <span>Cronómetro Oficial Dad WOD</span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">Control auditivo por tonos y marcaje de vueltas en tiempo real.</p>
+          </div>
+
+          <!-- Mode Selectors -->
+          <div class="flex flex-wrap gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800" id="timer-mode-buttons">
+            <button onclick="setTimerMode('amrap')" class="mode-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-orange-500 text-white" data-mode="amrap">AMRAP</button>
+            <button onclick="setTimerMode('emom')" class="mode-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white" data-mode="emom">EMOM</button>
+            <button onclick="setTimerMode('fortime')" class="mode-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white" data-mode="fortime">POR TIEMPO</button>
+            <button onclick="setTimerMode('intervals')" class="mode-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white" data-mode="intervals">INTERVALOS</button>
+          </div>
+        </div>
+
+        <!-- Center Digital Display -->
+        <div class="py-10 flex flex-col items-center justify-center relative">
+          
+          <!-- Mode Details Pill -->
+          <div id="timer-mode-pill" class="mb-3 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-500/10 text-orange-400 border border-orange-500/30">
+            AMRAP • CUENTA ATRÁS
+          </div>
+
+          <!-- Big Digits Display -->
+          <div class="relative">
+            <div id="timer-display" class="font-mono text-7xl sm:text-8xl md:text-9xl font-black tracking-tight text-white select-none">
+              15:00
+            </div>
+            <!-- Status indicator dot -->
+            <div id="timer-status-dot" class="absolute -right-4 top-2 w-3 h-3 rounded-full bg-slate-600"></div>
+          </div>
+
+          <!-- Secondary Sub-info (Round/EMOM info) -->
+          <div id="timer-subinfo" class="mt-4 text-center">
+            <div class="text-sm font-semibold text-slate-300">Rondas completadas: <span id="timer-lap-count" class="text-orange-400 text-lg font-bold">0</span></div>
+            <div id="timer-interval-hint" class="text-xs text-slate-400 mt-1">Pulsa ESPACIO o el botón 'VUELTA / RONDA' cada vez que finalices una ronda</div>
+          </div>
+
+          <!-- Sound Controls Switch -->
+          <div class="mt-4 flex items-center space-x-2 text-xs text-slate-400">
+            <button onclick="toggleAudioMute()" id="btn-toggle-sound" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+              <i data-lucide="volume-2" id="icon-sound" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span id="label-sound">Audio Activo (Beeps)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Control Actions Grid -->
+        <div class="flex flex-wrap items-center justify-center gap-3 pt-6 border-t border-slate-800">
+          <button id="btn-timer-start" onclick="toggleTimer()" class="px-8 py-3.5 rounded-xl font-black text-sm tracking-wide bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 flex items-center space-x-2 transition-all">
+            <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+            <span>INICIAR</span>
+          </button>
+
+          <button id="btn-timer-lap" onclick="recordTimerLap()" class="px-6 py-3.5 rounded-xl font-bold text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center space-x-2 transition-all">
+            <i data-lucide="flag" class="w-5 h-5 text-amber-400"></i>
+            <span>+1 RONDA (LAP)</span>
+          </button>
+
+          <button onclick="resetTimer()" class="px-5 py-3.5 rounded-xl font-semibold text-sm bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 flex items-center space-x-2 transition-all">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            <span>Reiniciar</span>
+          </button>
+
+          <button onclick="finishAndLogWorkout()" class="px-5 py-3.5 rounded-xl font-bold text-sm bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center space-x-2 transition-all">
+            <i data-lucide="check-circle" class="w-4 h-4"></i>
+            <span>Guardar en Historial</span>
+          </button>
+        </div>
+
+        <!-- Timer Presets & Settings Drawer -->
+        <div class="mt-8 bg-slate-950/70 p-4 rounded-xl border border-slate-800">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+            <span>Ajustes Rápidos de Duración</span>
+            <span class="text-orange-400">Formatos Oficiales Dad Hours</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button onclick="setQuickTimer(14, 'amrap')" class="p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-left text-xs transition">
+              <span class="font-bold text-white block">14 Min AMRAP</span>
+              <span class="text-[10px] text-slate-400">Viernes: Metabolic Power</span>
+            </button>
+            <button onclick="setQuickTimer(16, 'emom')" class="p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-left text-xs transition">
+              <span class="font-bold text-white block">16 Min EMOM</span>
+              <span class="text-[10px] text-slate-400">Martes: Upper Density</span>
+            </button>
+            <button onclick="setQuickTimer(15, 'amrap')" class="p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-left text-xs transition">
+              <span class="font-bold text-white block">15 Min AMRAP</span>
+              <span class="text-[10px] text-slate-400">The Engine Estándar</span>
+            </button>
+            <button onclick="setQuickTimer(18, 'fortime')" class="p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-left text-xs transition">
+              <span class="font-bold text-white block">18 Min Time Cap</span>
+              <span class="text-[10px] text-slate-400">Sábado: The Chipper</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: HISTORIAL DE MARCAS, PRS & ANALÍTICA -->
+    <!-- ========================================== -->
+    <div id="tab-history" class="tab-content hidden space-y-6">
+      
+      <!-- Top Action Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-extrabold text-white flex items-center space-x-2">
+            <i data-lucide="trophy" class="w-5 h-5 text-amber-400"></i>
+            <span>Historial de Marcas & Récords Personales</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">Control objetivo de sobrecarga progresiva y esfuerzo percibido (RPE).</p>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <button onclick="openLogModal()" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs flex items-center space-x-1.5 shadow-md shadow-orange-500/20 transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Registrar WOD</span>
+          </button>
+          <button onclick="exportHistoryCSV()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs flex items-center space-x-1.5 border border-slate-700 transition">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Exportar CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- PR Highlights Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="pr-cards-container">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <!-- Analytics Chart Section -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+          <div>
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+              <i data-lucide="line-chart" class="w-4 h-4 text-emerald-400"></i>
+              <span>Evolución de Intensidad (RPE) & Cargas (kg)</span>
+            </h3>
+            <p class="text-xs text-slate-400">Tendencia de los últimos entrenamientos registrados</p>
+          </div>
+          <div class="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
+            Chart.js Engine
+          </div>
+        </div>
+
+        <div class="w-full h-64 sm:h-72">
+          <canvas id="progressChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Logs Data Table -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+        <div class="p-4 sm:p-5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h3 class="font-bold text-white text-sm">Registro Cronológico de Sesiones</h3>
+          <div class="flex items-center space-x-2">
+            <input type="text" id="log-search-input" oninput="filterLogsTable()" placeholder="Buscar por WOD o notas..." class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-orange-500 w-52">
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950/80 uppercase text-[10px] tracking-wider font-bold text-slate-400 border-b border-slate-800">
+              <tr>
+                <th class="py-3 px-4">Fecha</th>
+                <th class="py-3 px-4">WOD / Entrenamiento</th>
+                <th class="py-3 px-4">Resultado / Marca</th>
+                <th class="py-3 px-4">Carga (kg)</th>
+                <th class="py-3 px-4">RPE</th>
+                <th class="py-3 px-4">Observaciones</th>
+                <th class="py-3 px-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="logs-table-body" class="divide-y divide-slate-800/60 font-medium">
+              <!-- Injected via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+        <div id="no-logs-message" class="hidden p-8 text-center text-slate-400 text-xs">
+          No hay sesiones que coincidan con la búsqueda. ¡Anota tu primer entrenamiento!
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: GUÍA NUTRICIONAL & BATCH COOKING    -->
+    <!-- ========================================== -->
+    <div id="tab-nutrition" class="tab-content hidden space-y-6">
+
+      <!-- Targets Summary Header -->
+      <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div class="space-y-1">
+            <div class="inline-flex items-center space-x-2 px-3 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+              <i data-lucide="scale" class="w-3.5 h-3.5"></i>
+              <span>PLAN PERSONALIZADO • RECOMPOSICIÓN CORPORAL</span>
+            </div>
+            <h2 class="text-2xl font-black text-white">Diana Nutricional Diaria (2250 kcal)</h2>
+            <p class="text-xs text-slate-400 max-w-2xl leading-relaxed">
+              Diseñado para preservar el rendimiento glucolítico en AMRAP/EMOM y asegurar la síntesis proteica muscular (MPS) en déficit moderado. <strong class="text-orange-400">Regla estricta: Cero huevo cocido y cero atún en lata.</strong>
+            </p>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-center">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Calorías</div>
+              <div class="text-xl font-black text-white mt-0.5">2,250</div>
+              <div class="text-[9px] text-slate-500">kcal / día</div>
+            </div>
+            <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-center">
+              <div class="text-[10px] uppercase font-bold text-emerald-400">Proteína</div>
+              <div class="text-xl font-black text-emerald-400 mt-0.5">190 g</div>
+              <div class="text-[9px] text-slate-500">~1.9 g/kg magro</div>
+            </div>
+            <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-center">
+              <div class="text-[10px] uppercase font-bold text-amber-400">Carbohidratos</div>
+              <div class="text-xl font-black text-amber-400 mt-0.5">210 g</div>
+              <div class="text-[9px] text-slate-500">Glucólisis rápida</div>
+            </div>
+            <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-center">
+              <div class="text-[10px] uppercase font-bold text-orange-400">Grasas</div>
+              <div class="text-xl font-black text-orange-400 mt-0.5">70 g</div>
+              <div class="text-[9px] text-slate-500">Eje hormonal</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4-Meal Structure (No Boiled Eggs, No Canned Tuna) -->
+      <div>
+        <h3 class="text-base font-bold text-white mb-3 flex items-center space-x-2">
+          <i data-lucide="clock" class="w-4 h-4 text-orange-400"></i>
+          <span>Estructura de 4 Tomas (Bolos de 40-50g de Proteína)</span>
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Meal 1: Desayuno -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div class="flex items-center space-x-2.5">
+                <span class="w-7 h-7 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center font-black text-xs">1</span>
+                <div>
+                  <h4 class="font-bold text-white text-sm">Desayuno Caliente</h4>
+                  <span class="text-[11px] text-slate-400">~40g Proteína • 40g Carbos • 15g Grasas</span>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">3 min exprés</span>
+            </div>
+            <div class="mt-3 text-xs text-slate-300 space-y-2 leading-relaxed">
+              <p><strong class="text-white">Opción Caliente:</strong> Revuelto o tortilla francesa jugosa de 3 huevos enteros + 150ml de claras pasteurizadas al momento en sartén con 1 cucharadita de AOVE. Acompañar con 60g de pan de centeno o masa madre integral tostado.</p>
+              <p><strong class="text-white">Opción Bol Dulce:</strong> Bol de avena cocida (50g) en leche o agua + 40g de proteína aislada de suero (Whey) + 20g de nueces troceadas y canela.</p>
+              <div class="p-2 rounded bg-slate-950 text-[11px] text-emerald-400 border border-slate-800/80">
+                ✓ Libre de huevo cocido frío. Sabor superior y saciedad térmica inmediata.
+              </div>
+            </div>
+          </div>
+
+          <!-- Meal 2: Comida Principal (Batch Cooking) -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div class="flex items-center space-x-2.5">
+                <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-xs">2</span>
+                <div>
+                  <h4 class="font-bold text-white text-sm">Comida Principal 1</h4>
+                  <span class="text-[11px] text-slate-400">~50g Proteína • 70g Carbos • 20g Grasas</span>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Tupper Lote</span>
+            </div>
+            <div class="mt-3 text-xs text-slate-300 space-y-2 leading-relaxed">
+              <p><strong class="text-white">Base Proteica:</strong> 220g de pechuga de pollo marinada con pimentón/hierbas al horno o solomillo de pavo en tiras.</p>
+              <p><strong class="text-white">Combustible:</strong> 250g de patata o boniato asado en dados (cocinado en lote el domingo).</p>
+              <p><strong class="text-white">Micronutrientes:</strong> Salteado generoso de calabacín, brócoli y pimiento rojo con 10g de AOVE.</p>
+              <div class="p-2 rounded bg-slate-950 text-[11px] text-slate-400 border border-slate-800/80">
+                Reabastece glucógeno para el WOD vespertino o recupera la sesión matinal.
+              </div>
+            </div>
+          </div>
+
+          <!-- Meal 3: Merienda / Pre-WOD -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div class="flex items-center space-x-2.5">
+                <span class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-xs">3</span>
+                <div>
+                  <h4 class="font-bold text-white text-sm">Merienda Rápida</h4>
+                  <span class="text-[11px] text-slate-400">~40g Proteína • 50g Carbos • 10g Grasas</span>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">0 min cocinado</span>
+            </div>
+            <div class="mt-3 text-xs text-slate-300 space-y-2 leading-relaxed">
+              <p><strong class="text-white">Opción Bol Proteico:</strong> 350g de queso fresco batido 0% (o yogur griego desnatado) + 1 plátano maduro troceado + 20g de nueces o almendras tostadas.</p>
+              <p><strong class="text-white">Opción Salada Gourmet:</strong> Tostada de pan de masa madre (70g) con 80g de lomo embuchado ibérico o pechuga de pavo de corte fino + tomate natural rallado con toque de sal y AOVE.</p>
+              <div class="p-2 rounded bg-slate-950 text-[11px] text-emerald-400 border border-slate-800/80">
+                ✓ Cero latas de atún escurridas. Cero olores desagradables en la oficina.
+              </div>
+            </div>
+          </div>
+
+          <!-- Meal 4: Cena Reparadora -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div class="flex items-center space-x-2.5">
+                <span class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-black text-xs">4</span>
+                <div>
+                  <h4 class="font-bold text-white text-sm">Cena Reparadora 2</h4>
+                  <span class="text-[11px] text-slate-400">~50g Proteína • 40g Carbos • 20g Grasas</span>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">Tupper Lote</span>
+            </div>
+            <div class="mt-3 text-xs text-slate-300 space-y-2 leading-relaxed">
+              <p><strong class="text-white">Pescado o Carne Magra:</strong> 200g de lomos de salmón fresco al horno (ácidos grasos Omega-3 antiinflamatorios) o 2 hamburguesas caseras de ternera picada magra 95/5.</p>
+              <p><strong class="text-white">Carbohidrato Ligero:</strong> 150g de arroz basmati cocido o quinoa cocida al dente.</p>
+              <p><strong class="text-white">Fibra & Digestión:</strong> Ensalada verde grande con espinacas baby, rúcula y tomate cherry o crema casera de calabaza y puerro.</p>
+              <div class="p-2 rounded bg-slate-950 text-[11px] text-slate-400 border border-slate-800/80">
+                Aporta magnesio y zinc para la recuperación nocturna del sistema nervioso.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Batch Cooking 90-Minute Blueprint & Interactive Shopping List -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 90-min Protocol Guide (7 Cols) -->
+        <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <h3 class="text-base font-bold text-white flex items-center space-x-2">
+              <i data-lucide="chef-hat" class="w-5 h-5 text-orange-400"></i>
+              <span>Protocolo Batch Cooking (90 Minutos el Domingo)</span>
+            </h3>
+            <span class="text-xs text-orange-400 font-semibold">Eficiencia Papá</span>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Cocina una sola vez para toda la semana laboral. Sin pensar qué comer al volver agotado del trabajo.
+          </p>
+
+          <ol class="relative border-l border-slate-800 ml-3 space-y-4 text-xs text-slate-300">
+            <li class="ml-6">
+              <span class="absolute -left-3 flex items-center justify-center w-6 h-6 bg-orange-500/20 text-orange-400 rounded-full font-bold border border-orange-500/40 text-[10px]">1</span>
+              <h4 class="font-bold text-white text-xs">Minuto 0-15: Precalentamiento y Picar en Masa</h4>
+              <p class="text-slate-400 mt-0.5">Precalienta el horno a 200°C con ventilador. Corta 1.5 kg de patatas/boniatos en dados de 2 cm y pica calabacines y pimientos. Coloca papel de hornear en 2 bandejas.</p>
+            </li>
+            <li class="ml-6">
+              <span class="absolute -left-3 flex items-center justify-center w-6 h-6 bg-orange-500/20 text-orange-400 rounded-full font-bold border border-orange-500/40 text-[10px]">2</span>
+              <h4 class="font-bold text-white text-xs">Minuto 15-45: Doble Bandeja de Horno</h4>
+              <p class="text-slate-400 mt-0.5">Bandeja superior: Dados de tubérculos con AOVE, sal y romero. Bandeja inferior: 1.2 kg de pechugas o contramuslos desgrasados + verduras. Hornear durante 30-35 minutos.</p>
+            </li>
+            <li class="ml-6">
+              <span class="absolute -left-3 flex items-center justify-center w-6 h-6 bg-orange-500/20 text-orange-400 rounded-full font-bold border border-orange-500/40 text-[10px]">3</span>
+              <h4 class="font-bold text-white text-xs">Minuto 30-55: Olla de Arroz Basmati / Quinoa</h4>
+              <p class="text-slate-400 mt-0.5">Hierve 400g de arroz basmati con laurel y un diente de ajo durante 11 minutos. Escurre, enfría bajo agua fría para cortar la cocción y reserva suelto.</p>
+            </li>
+            <li class="ml-6">
+              <span class="absolute -left-3 flex items-center justify-center w-6 h-6 bg-orange-500/20 text-orange-400 rounded-full font-bold border border-orange-500/40 text-[10px]">4</span>
+              <h4 class="font-bold text-white text-xs">Minuto 60-75: Salmón o Hamburguesas Rápidas</h4>
+              <p class="text-slate-400 mt-0.5">Aprovecha el calor residual del horno para 12 minutos de salmón fresco con limón o marca en sartén antiadherente las hamburguesas magras de ternera.</p>
+            </li>
+            <li class="ml-6">
+              <span class="absolute -left-3 flex items-center justify-center w-6 h-6 bg-emerald-500/20 text-emerald-400 rounded-full font-bold border border-emerald-500/40 text-[10px]">5</span>
+              <h4 class="font-bold text-white text-xs">Minuto 75-90: Emplatado Hermético y Limpieza</h4>
+              <p class="text-slate-400 mt-0.5">Reparte en 8 tuppers de cristal: 4 para comidas y 4 para cenas. Guarda 3 días en nevera y congela el resto si lo prefieres. Cocina limpia para toda la semana.</p>
+            </li>
+          </ol>
+        </div>
+
+        <!-- Interactive Shopping List (5 Cols) -->
+        <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                <i data-lucide="shopping-cart" class="w-5 h-5 text-emerald-400"></i>
+                <span>Lista de la Compra Semanal</span>
+              </h3>
+              <button onclick="resetShoppingList()" title="Reiniciar casillas" class="text-[11px] text-slate-400 hover:text-white flex items-center space-x-1">
+                <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                <span>Reiniciar</span>
+              </button>
+            </div>
+            <p class="text-xs text-slate-400 mt-1 mb-3">Toca los artículos al pasar por el supermercado. Se guardan en tu navegador.</p>
+
+            <div class="space-y-4 max-h-[420px] overflow-y-auto pr-1" id="shopping-list-container">
+              <!-- Injected dynamically via JavaScript -->
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-800 mt-4 flex items-center justify-between text-xs text-slate-400">
+            <span>Progreso compra:</span>
+            <span id="shopping-progress-text" class="font-bold text-emerald-400">0 / 0 completados</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scientific Evidence vs Fitness Industry Myths -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div class="mb-4">
+          <div class="inline-flex items-center space-x-2 px-3 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-semibold mb-2">
+            <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
+            <span>CIENCIA INDEPENDIENTE VS MARKETING FITNESS</span>
+          </div>
+          <h3 class="text-lg font-bold text-white">Evidencia Fisiológica Real aplicada a WODs Cortos</h3>
+          <p class="text-xs text-slate-400">Datos contrastados sin conflictos de interés con marcas de suplementos.</p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950 uppercase text-[10px] tracking-wider font-bold text-slate-400 border-b border-slate-800">
+              <tr>
+                <th class="py-3 px-4 w-1/4">Factor Biológico</th>
+                <th class="py-3 px-4 w-1/3 text-orange-400">Mito Comercial / Redes Sociales</th>
+                <th class="py-3 px-4 text-emerald-400">Evidencia Científica Independiente</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/80 font-normal">
+              <tr>
+                <td class="py-3 px-4 font-bold text-white">Efecto Quemagrasas EPOC</td>
+                <td class="py-3 px-4 text-slate-400">"Quemas calorías y grasa en piloto automático durante 48h tras 15 min de WOD."</td>
+                <td class="py-3 px-4 text-slate-200"><strong class="text-white">LaForgia et al. / Hazell et al.:</strong> El EPOC tras HIIT solo aporta un 6-15% del coste neto del ejercicio (25-45 kcal reales extra). El balance calórico diario manda.</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-bold text-white">Ventana Anabólica</td>
+                <td class="py-3 px-4 text-slate-400">"Debes beber batido en los primeros 20 minutos o perderás el músculo ganado."</td>
+                <td class="py-3 px-4 text-slate-200"><strong class="text-white">Aragon & Schoenfeld (2013):</strong> La ventana anabólica es de 4-6 horas. Lo determinante es el total diario (1.8-2.0 g/kg) espaciado en bolos de 40g cada 3-4 horas.</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-bold text-white">Carbohidratos en HIIT</td>
+                <td class="py-3 px-4 text-slate-400">"Entrenar cetogénico o sin carbos quema más grasa corporal en los AMRAPs."</td>
+                <td class="py-3 px-4 text-slate-200"><strong class="text-white">Burke et al. (Estudios Supernova) / Jeukendrup:</strong> Esfuerzos >85% FCmáx dependen obligatoriamente de la glucólisis citoplasmática. Sin glucógeno se desploma la potencia mecánica.</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-bold text-white">Sodio e Hidratación</td>
+                <td class="py-3 px-4 text-slate-400">"Elimina la sal por completo para marcar abdominales y no retener líquidos."</td>
+                <td class="py-3 px-4 text-slate-200"><strong class="text-white">American College of Sports Medicine:</strong> El sudor intenso en WODs demanda 4-5g de sal marina diaria. La hiponatremia reduce el volumen plasmático y colapsa el gasto cardíaco.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- MODAL: REGISTRAR / EDITAR MARCA (WOD LOG) -->
+  <div id="modal-log" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeLogModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="mb-5">
+        <div class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-orange-500/10 text-orange-400 text-xs font-bold mb-1">
+          <i data-lucide="dumbbell" class="w-3.5 h-3.5"></i>
+          <span id="log-modal-subtitle">NUEVO REGISTRO</span>
+        </div>
+        <h3 class="text-xl font-black text-white" id="log-modal-title">Anotar Marca de Entrenamiento</h3>
+      </div>
+
+      <form id="form-log-workout" onsubmit="saveWorkoutLog(event)" class="space-y-4 text-xs">
+        <input type="hidden" id="log-edit-id" value="">
+
+        <!-- Date & Workout Choice -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">Fecha</label>
+            <input type="date" id="log-date" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-orange-500">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">WOD / Sesión</label>
+            <select id="log-wod-select" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-orange-500">
+              <option value="Lunes: Sprint & Engine">Lunes: Sprint & Engine (Intervalos)</option>
+              <option value="Martes: Upper Density">Martes: Upper Density (EMOM 16')</option>
+              <option value="Miércoles: Lower Strength & Power">Miércoles: Lower Strength (4 RFT)</option>
+              <option value="Jueves: Active Recovery">Jueves: Recuperación Activa (Zona 2)</option>
+              <option value="Viernes: Metabolic Power">Viernes: Metabolic Power (AMRAP 14')</option>
+              <option value="Sábado: The Weekend Chipper">Sábado: The Weekend Chipper (Por tiempo)</option>
+              <option value="Personalizado / Libre">WOD Personalizado / Prueba</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Score & Load -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">Marca Obtenida (Score)</label>
+            <input type="text" id="log-score" required placeholder="Ej: 5 rondas + 8 reps / 14:32 min / 4.2 km" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-orange-500">
+            <span class="text-[10px] text-slate-500">Rondas, tiempo cronometrado o ritmo.</span>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">Peso Empleado (Mancuerna/KB en kg)</label>
+            <input type="number" step="0.5" id="log-weight" placeholder="Ej: 16 o 20 (opcional)" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-orange-500">
+            <span class="text-[10px] text-slate-500">Carga externa por mancuerna.</span>
+          </div>
+        </div>
+
+        <!-- RPE Range Slider (1 - 10) -->
+        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="font-bold text-slate-300">Esfuerzo Percibido (RPE)</label>
+            <span id="log-rpe-display" class="font-mono font-bold text-orange-400 text-sm">8 / 10</span>
+          </div>
+          <input type="range" min="1" max="10" step="0.5" value="8" id="log-rpe-slider" oninput="updateRpeDisplay(this.value)" class="w-full accent-orange-500 cursor-pointer">
+          <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+            <span>1 (Paseo suave)</span>
+            <span>7-8 (Óptimo WOD)</span>
+            <span>10 (Fallo absoluto)</span>
+          </div>
+        </div>
+
+        <!-- PR Checkbox -->
+        <div class="flex items-center space-x-2 pt-1">
+          <input type="checkbox" id="log-is-pr" class="w-4 h-4 rounded accent-emerald-500 bg-slate-950 border-slate-800">
+          <label for="log-is-pr" class="font-bold text-slate-200 cursor-pointer select-none">¿Ha sido Récord Personal (PR)? 🎉</label>
+        </div>
+
+        <!-- Observations / Notes -->
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Notas y Sensaciones</label>
+          <textarea id="log-notes" rows="2" placeholder="Sensaciones en el tendón, ritmo cardíaco, clima o fatiga..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-orange-500"></textarea>
+        </div>
+
+        <!-- Submit & Cancel Buttons -->
+        <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeLogModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold flex items-center space-x-1.5 shadow-lg shadow-orange-500/20">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Guardar Marca</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: BACKUP Y GESTIÓN DE DATOS -->
+  <div id="modal-backup" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+      <button onclick="closeBackupModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="mb-5">
+        <h3 class="text-xl font-black text-white flex items-center space-x-2">
+          <i data-lucide="database" class="w-5 h-5 text-orange-400"></i>
+          <span>Copia de Seguridad y Datos</span>
+        </h3>
+        <p class="text-xs text-slate-400 mt-1">Exporta tu historial para guardarlo o sincronizarlo en otro dispositivo.</p>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <!-- Export JSON -->
+        <button onclick="exportJSONBackup()" class="w-full p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 flex items-center justify-between text-left transition">
+          <div>
+            <div class="font-bold text-white">Exportar Copia de Seguridad (JSON)</div>
+            <div class="text-[10px] text-slate-400">Descarga un archivo con tus marcas y lista de la compra.</div>
+          </div>
+          <i data-lucide="download" class="w-4 h-4 text-orange-400"></i>
+        </button>
+
+        <!-- Import JSON -->
+        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+          <div class="font-bold text-white mb-1">Restaurar desde Archivo (JSON)</div>
+          <div class="text-[10px] text-slate-400 mb-2">Selecciona un archivo de backup previamente exportado.</div>
+          <input type="file" id="import-json-file" accept=".json" onchange="importJSONBackup(event)" class="text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-orange-400 hover:file:bg-slate-700 cursor-pointer">
+        </div>
+
+        <!-- Reset Sample Data -->
+        <button onclick="confirmResetData()" class="w-full p-3 rounded-xl bg-red-950/30 hover:bg-red-950/50 border border-red-900/40 text-red-300 flex items-center justify-between text-left transition">
+          <div>
+            <div class="font-bold text-red-200">Cargar Datos de Ejemplo Iniciales</div>
+            <div class="text-[10px] text-red-400/80">Restaura la programación limpia y entrenamientos de prueba.</div>
+          </div>
+          <i data-lucide="refresh-cw" class="w-4 h-4 text-red-400"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Center -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <script>
+    /* =========================================================
+       1. DATA STRUCTURES & DEFAULT PRESETS
+       ========================================================= */
+    const PROGRAM_DAYS = [
+      {
+        id: 'mon',
+        day: 'Lunes',
+        title: 'Sprint & Engine',
+        tag: 'VO2 MÁX & INTERVALOS',
+        duration: '20 min',
+        type: 'intervals',
+        presetMinutes: 16,
+        color: 'from-orange-500/20 to-amber-500/10',
+        borderColor: 'border-orange-500/30',
+        description: 'Potencia aeróbica y velocidad sin sobrecargar tendones.',
+        structure: [
+          'Calentamiento dinámico (4 min): Movilidad + trote progresivo.',
+          'WOD Principal: 8 Rondas de 30s Sprint fuerte (90% FC) + 90s Recup caminando.',
+          'Vuelta a la calma (2 min): Caminata y respiración nasal.'
+        ],
+        garminTip: 'Configura 8 repeticiones de [Carrera 0:30 / Recuperación 1:30].'
+      },
+      {
+        id: 'tue',
+        day: 'Martes',
+        title: 'Upper Density',
+        tag: 'FUERZA EMPUJE / TRACCIÓN',
+        duration: '16 min',
+        type: 'emom',
+        presetMinutes: 16,
+        color: 'from-blue-500/20 to-indigo-500/10',
+        borderColor: 'border-blue-500/30',
+        description: 'Tensión mecánica controlada en tren superior bajo fatiga.',
+        structure: [
+          'Minuto 1: 8-10 Press de hombros con mancuernas estrictas.',
+          'Minuto 2: 12 Remo con mancuernas en bisagra de cadera.',
+          'Minuto 3: 15 Flexiones (Push-ups) pecho a tierra.',
+          'Minuto 4: Descanso total. (Repetir 4 rondas).'
+        ],
+        garminTip: 'Usa modo HIIT EMOM de 16 minutos avisando al inicio de cada minuto.'
+      },
+      {
+        id: 'wed',
+        day: 'Miércoles',
+        title: 'Lower Strength & Power',
+        tag: 'TREN INFERIOR FUNCIONAL',
+        duration: '18 min',
+        type: 'fortime',
+        presetMinutes: 15,
+        color: 'from-emerald-500/20 to-teal-500/10',
+        borderColor: 'border-emerald-500/30',
+        description: 'Extensión potente de cadera y fuerza de piernas.',
+        structure: [
+          '4 Rondas por tiempo (Cap: 15 min):',
+          '• 15 Goblet Squats (Mancuerna/KB pesada)',
+          '• 12 Kettlebell Swings potentes de cadera',
+          '• 10 Zancadas alternas con peso (5/pierna)',
+          '• 60s de descanso estricto entre rondas.'
+        ],
+        garminTip: 'Modo For Time con botón Lap al terminar cada una de las 4 rondas.'
+      },
+      {
+        id: 'thu',
+        day: 'Jueves',
+        title: 'Recuperación Activa',
+        tag: 'BASE AERÓBICA ZONA 2',
+        duration: '25 min',
+        type: 'fortime',
+        presetMinutes: 25,
+        color: 'from-cyan-500/20 to-sky-500/10',
+        borderColor: 'border-cyan-500/30',
+        description: 'Aclaramiento de lactato y modulación parasimpática.',
+        structure: [
+          '25 minutos de carrera suave conversacional o bicicleta estática.',
+          'Zona 2 estricta (60-70% FCmáx). Ritmo en el que podrías hablar por teléfono.',
+          'Estiramientos ligeros de movilidad torácica.'
+        ],
+        garminTip: 'Alarma de frecuencia cardíaca fijada en límite superior de Zona 2.'
+      },
+      {
+        id: 'fri',
+        day: 'Viernes',
+        title: 'Metabolic Power',
+        tag: 'AMRAP 14 MINUTOS',
+        duration: '14 min',
+        type: 'amrap',
+        presetMinutes: 14,
+        color: 'from-amber-500/20 to-red-500/10',
+        borderColor: 'border-amber-500/30',
+        description: 'Potencia unilateral explosiva y resistencia muscular.',
+        structure: [
+          'Tantas rondas y repeticiones como sea posible en 14 minutos:',
+          '• 8 Dumbbell Snatches alternos desde el suelo',
+          '• 10 Burpees sobre la mancuerna',
+          '• 15 Sit-ups (abdominales sin impulsos)'
+        ],
+        garminTip: 'Modo HIIT > AMRAP > 14:00. Usa botón Lap cada ronda.'
+      },
+      {
+        id: 'sat',
+        day: 'Sábado',
+        title: 'The Weekend Chipper',
+        tag: 'HÍBRIDO VOLUMEN & CARRERA',
+        duration: '18 min',
+        type: 'fortime',
+        presetMinutes: 18,
+        color: 'from-purple-500/20 to-pink-500/10',
+        borderColor: 'border-purple-500/30',
+        description: 'Prueba de resistencia integral al aire libre o en box.',
+        structure: [
+          'Por tiempo (Time Cap: 18 min):',
+          '400m Run + 40 Air Squats + 30 Push-ups + 20 KB Swings + 10 Thrusters + 400m Run final.'
+        ],
+        garminTip: 'Actividad Carrera con aviso manual o Lap por cada transición.'
+      },
+      {
+        id: 'sun',
+        day: 'Domingo',
+        title: 'Descanso Total & Batch Cooking',
+        tag: 'REGENERACIÓN & COCINA',
+        duration: '0 min WOD',
+        type: 'none',
+        presetMinutes: 0,
+        color: 'from-slate-800 to-slate-900',
+        borderColor: 'border-slate-800',
+        description: 'Día sagrado de familia, recarga mental y preparación de tuppers.',
+        structure: [
+          'Descanso pasivo total de entrenamiento.',
+          '90 minutos de cocina en lote (Batch Cooking).',
+          'Paseo familiar relajado.'
+        ],
+        garminTip: 'Monitorea tu VFC (Variabilidad de Frecuencia Cardíaca) y descanso.'
+      }
+    ];
+
+    const DEFAULT_SHOPPING_ITEMS = [
+      { id: 'item_1', category: 'Proteínas Frescas', name: '1.2 kg Pechuga o Solomillo de Pollo/Pavo', checked: false },
+      { id: 'item_2', category: 'Proteínas Frescas', name: '800 g Lomos de Salmón fresco o Dorada', checked: false },
+      { id: 'item_3', category: 'Proteínas Frescas', name: '600 g Ternera picada magra (95/5)', checked: false },
+      { id: 'item_4', category: 'Proteínas Frescas', name: '1 docena de Huevos enteros frescos (para tortillas/revueltos)', checked: false },
+      { id: 'item_5', category: 'Proteínas Frescas', name: '1 Bote Claras de huevo pasteurizadas (1 Litro)', checked: false },
+      { id: 'item_6', category: 'Lácteos & Rápidos', name: '4 Botes Queso fresco batido 0% (500g c/u)', checked: false },
+      { id: 'item_7', category: 'Lácteos & Rápidos', name: '200 g Lomo embuchado ibérico en lonchas', checked: false },
+      { id: 'item_8', category: 'Carbohidratos & Tubérculos', name: '2 kg Patatas o Boniatos para hornear', checked: false },
+      { id: 'item_9', category: 'Carbohidratos & Tubérculos', name: '1 kg Arroz Basmati o Quinoa', checked: false },
+      { id: 'item_10', category: 'Carbohidratos & Tubérculos', name: '1 Hogaza Pan de centeno / masa madre integral', checked: false },
+      { id: 'item_11', category: 'Carbohidratos & Tubérculos', name: '1 kg Copos de avena integral', checked: false },
+      { id: 'item_12', category: 'Verduras & Frutas', name: '1 kg Plátanos maduros', checked: false },
+      { id: 'item_13', category: 'Verduras & Frutas', name: '3 Calabacines y 2 Pimientos rojos', checked: false },
+      { id: 'item_14', category: 'Verduras & Frutas', name: '1 Bolsa Brócoli o ramilletes frescos', checked: false },
+      { id: 'item_15', category: 'Verduras & Frutas', name: 'Hojas verdes: Espinacas baby y rúcula', checked: false },
+      { id: 'item_16', category: 'Grasas & Despensa', name: 'Aceite de Oliva Virgen Extra (AOVE)', checked: false },
+      { id: 'item_17', category: 'Grasas & Despensa', name: '200 g Nueces o Almendras tostadas sin sal', checked: false },
+      { id: 'item_18', category: 'Grasas & Despensa', name: 'Sal marina gruesa, pimentón de la Vera, canela', checked: false }
+    ];
+
+    const SAMPLE_LOGS = [
+      {
+        id: 'log_1',
+        date: '2026-09-21',
+        wod: 'Lunes: Sprint & Engine',
+        score: '8 series de 30s (Ritmo prom 3:35/km)',
+        weight: 0,
+        rpe: 8.5,
+        isPr: false,
+        notes: 'Sprints muy limpios en recta de parque. Rodilla y tendón al 100% sin quejas.'
+      },
+      {
+        id: 'log_2',
+        date: '2026-09-22',
+        wod: 'Martes: Upper Density',
+        score: '4 rondas completas (sin fallar el minuto)',
+        weight: 16,
+        rpe: 8,
+        isPr: true,
+        notes: 'Mancuernas de 16kg para press militar. Buen bombeo en hombros.'
+      },
+      {
+        id: 'log_3',
+        date: '2026-09-23',
+        wod: 'Miércoles: Lower Strength & Power',
+        score: '11:45 min',
+        weight: 20,
+        rpe: 9,
+        isPr: true,
+        notes: 'Kettlebell de 20kg. Zancadas fluidas sin impacto articular.'
+      },
+      {
+        id: 'log_4',
+        date: '2026-09-25',
+        wod: 'Viernes: Metabolic Power',
+        score: '5 rondas + 8 DB snatches',
+        weight: 16,
+        rpe: 9,
+        isPr: true,
+        notes: 'Ritmo constante de principio a fin. PR de repeticiones en 14 minutos.'
+      }
+    ];
+
+    /* =========================================================
+       2. APPLICATION STATE
+       ========================================================= */
+    let appState = {
+      activeTab: 'dashboard',
+      logs: [],
+      shoppingList: [],
+      timer: {
+        mode: 'amrap', // 'amrap', 'emom', 'fortime', 'intervals'
+        state: 'stopped', // 'stopped', 'running', 'paused'
+        durationSeconds: 15 * 60,
+        remainingSeconds: 15 * 60,
+        elapsedSeconds: 0,
+        laps: 0,
+        interval: null,
+        soundEnabled: true,
+        wodTitle: 'AMRAP 15 MINUTOS'
+      }
+    };
+
+    let chartInstance = null;
+    let audioCtx = null;
+
+    /* =========================================================
+       3. AUDIO SYNTHESIZER (WEB AUDIO API)
+       ========================================================= */
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playBeep(frequency = 440, duration = 0.12, type = 'sine') {
+      if (!appState.timer.soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {
+        console.warn('Audio play error:', e);
+      }
+    }
+
+    function playTripleBeep() {
+      playBeep(520, 0.1);
+      setTimeout(() => playBeep(650, 0.1), 150);
+      setTimeout(() => playBeep(880, 0.35, 'triangle'), 300);
+    }
+
+    function toggleAudioMute() {
+      appState.timer.soundEnabled = !appState.timer.soundEnabled;
+      const icon = document.getElementById('icon-sound');
+      const label = document.getElementById('label-sound');
+      if (appState.timer.soundEnabled) {
+        icon.className = 'w-3.5 h-3.5 text-emerald-400';
+        label.innerText = 'Audio Activo (Beeps)';
+        showToast('Sonidos activados', 'success');
+        playBeep(660, 0.1);
+      } else {
+        icon.className = 'w-3.5 h-3.5 text-slate-500';
+        label.innerText = 'Audio Silenciado';
+        showToast('Sonidos silenciados', 'info');
+      }
+    }
+
+    /* =========================================================
+       4. LOCAL STORAGE MANAGEMENT
+       ========================================================= */
+    function loadPersistedData() {
+      try {
+        const storedLogs = localStorage.getItem('dadhours_logs');
+        if (storedLogs) {
+          appState.logs = JSON.parse(storedLogs);
+        } else {
+          appState.logs = [...SAMPLE_LOGS];
+          localStorage.setItem('dadhours_logs', JSON.stringify(appState.logs));
+        }
+
+        const storedShopping = localStorage.getItem('dadhours_shopping');
+        if (storedShopping) {
+          appState.shoppingList = JSON.parse(storedShopping);
+        } else {
+          appState.shoppingList = [...DEFAULT_SHOPPING_ITEMS];
+          localStorage.setItem('dadhours_shopping', JSON.stringify(appState.shoppingList));
+        }
+      } catch (err) {
+        console.error('Error loading localStorage:', err);
+        appState.logs = [...SAMPLE_LOGS];
+        appState.shoppingList = [...DEFAULT_SHOPPING_ITEMS];
+      }
+    }
+
+    function saveLogsToStorage() {
+      localStorage.setItem('dadhours_logs', JSON.stringify(appState.logs));
+    }
+
+    function saveShoppingToStorage() {
+      localStorage.setItem('dadhours_shopping', JSON.stringify(appState.shoppingList));
+    }
+
+    /* =========================================================
+       5. NAVIGATION & TABS
+       ========================================================= */
+    function switchTab(tabId) {
+      appState.activeTab = tabId;
+
+      // Tab contents
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      const activeEl = document.getElementById(`tab-${tabId}`);
+      if (activeEl) activeEl.classList.remove('hidden');
+
+      // Desktop nav button active styling
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-orange-500', 'text-white', 'shadow-sm', 'shadow-orange-500/20');
+        btn.classList.add('text-slate-400');
+      });
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if (activeNav) {
+        activeNav.classList.remove('text-slate-400');
+        activeNav.classList.add('bg-orange-500', 'text-white', 'shadow-sm', 'shadow-orange-500/20');
+      }
+
+      // Mobile nav icons active styling
+      ['dashboard', 'timer', 'history', 'nutrition'].forEach(id => {
+        const mobBtn = document.getElementById(`mob-nav-${id}`);
+        if (mobBtn) {
+          if (id === tabId) {
+            mobBtn.classList.remove('text-slate-400');
+            mobBtn.classList.add('text-orange-400', 'font-semibold');
+          } else {
+            mobBtn.classList.remove('text-orange-400', 'font-semibold');
+            mobBtn.classList.add('text-slate-400', 'font-medium');
+          }
+        }
+      });
+
+      // Special re-renders
+      if (tabId === 'history') {
+        renderHistoryTable();
+        renderPrCards();
+        renderAnalyticsChart();
+      } else if (tabId === 'dashboard') {
+        updateDashboardStats();
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* =========================================================
+       6. DASHBOARD & PROGRAM RENDERING
+       ========================================================= */
+    function renderWeeklyCards() {
+      const container = document.getElementById('weekly-wod-cards');
+      if (!container) return;
+
+      const todayIndex = new Date().getDay(); // 0 is Sunday, 1 Monday, etc.
+      // Map 0-6 to our array where Monday is index 0 and Sunday is 6
+      const mappedToday = todayIndex === 0 ? 6 : todayIndex - 1;
+
+      container.innerHTML = PROGRAM_DAYS.map((prog, index) => {
+        const isToday = index === mappedToday;
+        return `
+          <div class="bg-slate-900 border ${isToday ? 'border-orange-500 glow-orange' : 'border-slate-800'} rounded-2xl p-5 flex flex-col justify-between hover:border-slate-700 transition relative group">
+            ${isToday ? `
+              <div class="absolute -top-2.5 right-4 bg-orange-500 text-white font-black text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md">
+                HOY
+              </div>
+            ` : ''}
+
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-black uppercase text-slate-400 tracking-wider">${prog.day}</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">${prog.duration}</span>
+              </div>
+
+              <h3 class="text-base font-extrabold text-white group-hover:text-orange-400 transition">${prog.title}</h3>
+              <div class="text-[10px] font-bold text-orange-400 uppercase tracking-wide mb-3">${prog.tag}</div>
+              <p class="text-xs text-slate-400 mb-4 line-clamp-2">${prog.description}</p>
+
+              <!-- Structure summary list -->
+              <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-1.5 text-[11px] text-slate-300">
+                ${prog.structure.map(s => `<div class="leading-snug">• ${s}</div>`).join('')}
+              </div>
+            </div>
+
+            <!-- Card Bottom Actions -->
+            <div class="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between gap-2">
+              ${prog.presetMinutes > 0 ? `
+                <button onclick="launchPreset('${prog.id}')" class="flex-1 py-2 px-3 rounded-lg bg-orange-500/10 hover:bg-orange-500 text-orange-400 hover:text-white border border-orange-500/30 text-xs font-bold transition flex items-center justify-center space-x-1.5">
+                  <i data-lucide="play" class="w-3.5 h-3.5"></i>
+                  <span>Timer (${prog.presetMinutes}')</span>
+                </button>
+              ` : `
+                <span class="text-xs text-slate-500 font-medium">Recuperación pasiva</span>
+              `}
+
+              <button onclick="openLogForWod('${prog.day}: ${prog.title}')" title="Anotar marca de este WOD" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                <i data-lucide="pen-tool" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function updateDashboardStats() {
+      const now = new Date();
+      // Count workouts logged this calendar week
+      const currentYear = now.getFullYear();
+      const currentWeekNumber = getWeekNumber(now);
+
+      const thisWeekLogs = appState.logs.filter(l => {
+        const d = new Date(l.date);
+        return d.getFullYear() === currentYear && getWeekNumber(d) === currentWeekNumber;
+      });
+
+      document.getElementById('stat-week-wods').innerText = `${thisWeekLogs.length} / 5`;
+
+      // Estimate total minutes
+      const totalMinutes = appState.logs.reduce((acc, log) => {
+        if (log.score && log.score.includes('min')) {
+          const num = parseInt(log.score);
+          return acc + (isNaN(num) ? 15 : num);
+        }
+        return acc + 16;
+      }, 0);
+      document.getElementById('stat-total-mins').innerText = `${totalMinutes} min`;
+
+      // PR count
+      const prs = appState.logs.filter(l => l.isPr).length;
+      document.getElementById('stat-total-prs').innerText = prs;
+
+      // Avg RPE
+      if (appState.logs.length > 0) {
+        const avg = (appState.logs.reduce((acc, l) => acc + (parseFloat(l.rpe) || 0), 0) / appState.logs.length).toFixed(1);
+        document.getElementById('stat-avg-rpe').innerText = avg;
+      } else {
+        document.getElementById('stat-avg-rpe').innerText = '0.0';
+      }
+    }
+
+    function getWeekNumber(d) {
+      const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      const dayNum = date.getUTCDay() || 7;
+      date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+      return Math.ceil((((date - yearStart) / 86400000) + 1)/7);
+    }
+
+    function startTodaysWod() {
+      const todayIndex = new Date().getDay();
+      const mappedToday = todayIndex === 0 ? 6 : todayIndex - 1;
+      const todayProg = PROGRAM_DAYS[mappedToday];
+      if (todayProg && todayProg.presetMinutes > 0) {
+        launchPreset(todayProg.id);
+      } else {
+        switchTab('timer');
+      }
+    }
+
+    function launchPreset(progId) {
+      const prog = PROGRAM_DAYS.find(p => p.id === progId);
+      if (!prog) return;
+
+      setTimerMode(prog.type);
+      setQuickTimer(prog.presetMinutes, prog.type);
+      appState.timer.wodTitle = `${prog.day}: ${prog.title}`;
+      switchTab('timer');
+      showToast(`Temporizador preparado para: ${prog.title}`, 'info');
+    }
+
+    /* =========================================================
+       7. WOD TIMER ENGINE
+       ========================================================= */
+    function setTimerMode(mode) {
+      if (appState.timer.state === 'running') {
+        pauseTimer();
+      }
+      appState.timer.mode = mode;
+      appState.timer.laps = 0;
+      updateLapCountDisplay();
+
+      // Update button highlights
+      document.querySelectorAll('#timer-mode-buttons .mode-btn').forEach(btn => {
+        if (btn.dataset.mode === mode) {
+          btn.className = 'mode-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-orange-500 text-white shadow-sm';
+        } else {
+          btn.className = 'mode-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white';
+        }
+      });
+
+      const pill = document.getElementById('timer-mode-pill');
+      const hint = document.getElementById('timer-interval-hint');
+
+      if (mode === 'amrap') {
+        pill.innerText = 'AMRAP • CUENTA ATRÁS';
+        hint.innerText = 'Presiona +1 RONDA (LAP) cada vez que completes los ejercicios.';
+        setQuickTimer(15, 'amrap');
+      } else if (mode === 'emom') {
+        pill.innerText = 'EMOM • MINUTO A MINUTO';
+        hint.innerText = 'Aviso acústico en 3-2-1 y al cambiar de minuto de trabajo.';
+        setQuickTimer(16, 'emom');
+      } else if (mode === 'fortime') {
+        pill.innerText = 'POR TIEMPO • CRONÓMETRO PROGRESIVO';
+        hint.innerText = 'Finaliza la tarea tan rápido como sea posible. Pulsa Terminar al acabar.';
+        appState.timer.elapsedSeconds = 0;
+        appState.timer.remainingSeconds = 0;
+        updateTimerDisplay();
+      } else if (mode === 'intervals') {
+        pill.innerText = 'INTERVALOS • 30s TRABAJO / 90s DESCANSO';
+        hint.innerText = '8 ciclos de sprint al 90% con aviso sonoro en cada transición.';
+        setQuickTimer(16, 'intervals');
+      }
+    }
+
+    function setQuickTimer(minutes, mode = null) {
+      if (mode && mode !== appState.timer.mode) {
+        setTimerMode(mode);
+      }
+      if (appState.timer.state === 'running') {
+        pauseTimer();
+      }
+      appState.timer.durationSeconds = minutes * 60;
+      appState.timer.remainingSeconds = minutes * 60;
+      appState.timer.elapsedSeconds = 0;
+      appState.timer.laps = 0;
+      updateLapCountDisplay();
+      updateTimerDisplay();
+    }
+
+    function formatTime(totalSeconds) {
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function updateTimerDisplay() {
+      const display = document.getElementById('timer-display');
+      if (!display) return;
+
+      if (appState.timer.mode === 'fortime') {
+        display.innerText = formatTime(appState.timer.elapsedSeconds);
+      } else {
+        display.innerText = formatTime(appState.timer.remainingSeconds);
+      }
+    }
+
+    function toggleTimer() {
+      // Audio permission grant on user interaction
+      getAudioContext();
+
+      if (appState.timer.state === 'running') {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    function startTimer() {
+      appState.timer.state = 'running';
+      const btn = document.getElementById('btn-timer-start');
+      btn.className = 'px-8 py-3.5 rounded-xl font-black text-sm tracking-wide bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/25 flex items-center space-x-2 transition-all';
+      btn.innerHTML = `<i data-lucide="pause" class="w-5 h-5 fill-current"></i><span>PAUSAR</span>`;
+      
+      const dot = document.getElementById('timer-status-dot');
+      dot.className = 'absolute -right-4 top-2 w-3 h-3 rounded-full bg-emerald-500 animate-ping';
+
+      playBeep(880, 0.2); // Start beep
+
+      clearInterval(appState.timer.interval);
+      appState.timer.interval = setInterval(timerTick, 1000);
+      lucide.createIcons();
+    }
+
+    function pauseTimer() {
+      appState.timer.state = 'paused';
+      clearInterval(appState.timer.interval);
+
+      const btn = document.getElementById('btn-timer-start');
+      btn.className = 'px-8 py-3.5 rounded-xl font-black text-sm tracking-wide bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 flex items-center space-x-2 transition-all';
+      btn.innerHTML = `<i data-lucide="play" class="w-5 h-5 fill-current"></i><span>CONTINUAR</span>`;
+
+      const dot = document.getElementById('timer-status-dot');
+      dot.className = 'absolute -right-4 top-2 w-3 h-3 rounded-full bg-amber-500';
+
+      playBeep(440, 0.15);
+      lucide.createIcons();
+    }
+
+    function resetTimer() {
+      clearInterval(appState.timer.interval);
+      appState.timer.state = 'stopped';
+      appState.timer.remainingSeconds = appState.timer.durationSeconds;
+      appState.timer.elapsedSeconds = 0;
+      appState.timer.laps = 0;
+
+      updateTimerDisplay();
+      updateLapCountDisplay();
+
+      const btn = document.getElementById('btn-timer-start');
+      btn.className = 'px-8 py-3.5 rounded-xl font-black text-sm tracking-wide bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 flex items-center space-x-2 transition-all';
+      btn.innerHTML = `<i data-lucide="play" class="w-5 h-5 fill-current"></i><span>INICIAR</span>`;
+
+      const dot = document.getElementById('timer-status-dot');
+      dot.className = 'absolute -right-4 top-2 w-3 h-3 rounded-full bg-slate-600';
+      lucide.createIcons();
+    }
+
+    function timerTick() {
+      if (appState.timer.mode === 'fortime') {
+        appState.timer.elapsedSeconds++;
+        updateTimerDisplay();
+      } else {
+        if (appState.timer.remainingSeconds <= 0) {
+          timerFinished();
+          return;
+        }
+
+        appState.timer.remainingSeconds--;
+        appState.timer.elapsedSeconds++;
+        updateTimerDisplay();
+
+        // Audio Beeps Management
+        const rem = appState.timer.remainingSeconds;
+        const elap = appState.timer.elapsedSeconds;
+
+        // Final 3 seconds countdown
+        if (rem <= 3 && rem > 0) {
+          playBeep(440, 0.15);
+        }
+
+        // EMOM Beeps
+        if (appState.timer.mode === 'emom') {
+          const secondInMinute = elap % 60;
+          if (secondInMinute === 57 || secondInMinute === 58 || secondInMinute === 59) {
+            playBeep(440, 0.1);
+          } else if (secondInMinute === 0 && elap > 0) {
+            playBeep(880, 0.3, 'square');
+            appState.timer.laps++;
+            updateLapCountDisplay();
+          }
+        }
+
+        // Intervals Beeps (30s on / 90s off = 120s cycle)
+        if (appState.timer.mode === 'intervals') {
+          const cycleSec = elap % 120;
+          if (cycleSec === 27 || cycleSec === 28 || cycleSec === 29) {
+            playBeep(520, 0.1); // Sprint ending soon
+          } else if (cycleSec === 30) {
+            playBeep(330, 0.35, 'sawtooth'); // Walk recovery starts
+          } else if (cycleSec === 117 || cycleSec === 118 || cycleSec === 119) {
+            playBeep(440, 0.1); // Recovery ending
+          } else if (cycleSec === 0 && elap > 0) {
+            playBeep(880, 0.35, 'square'); // Sprint starts!
+            appState.timer.laps++;
+            updateLapCountDisplay();
+          }
+        }
+      }
+    }
+
+    function timerFinished() {
+      clearInterval(appState.timer.interval);
+      appState.timer.state = 'stopped';
+      playTripleBeep();
+      triggerConfetti();
+
+      showToast('¡TIEMPO FINALIZADO! Gran trabajo Dad.', 'success');
+
+      const btn = document.getElementById('btn-timer-start');
+      btn.innerHTML = `<i data-lucide="play" class="w-5 h-5 fill-current"></i><span>INICIAR</span>`;
+      lucide.createIcons();
+    }
+
+    function recordTimerLap() {
+      appState.timer.laps++;
+      updateLapCountDisplay();
+      playBeep(660, 0.08);
+      showToast(`Ronda ${appState.timer.laps} registrada`, 'info');
+    }
+
+    function updateLapCountDisplay() {
+      const el = document.getElementById('timer-lap-count');
+      if (el) el.innerText = appState.timer.laps;
+    }
+
+    function finishAndLogWorkout() {
+      pauseTimer();
+      let scoreText = '';
+      if (appState.timer.mode === 'amrap') {
+        scoreText = `${appState.timer.laps} rondas completas`;
+      } else if (appState.timer.mode === 'fortime') {
+        scoreText = formatTime(appState.timer.elapsedSeconds);
+      } else if (appState.timer.mode === 'emom') {
+        scoreText = `${appState.timer.laps} minutos completados`;
+      } else if (appState.timer.mode === 'intervals') {
+        scoreText = `${appState.timer.laps} intervalos de sprint`;
+      }
+
+      openLogModal({
+        wod: appState.timer.wodTitle || 'Viernes: Metabolic Power',
+        score: scoreText
+      });
+    }
+
+    // Keyboard Spacebar shortcut for Lap/Start
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && appState.activeTab === 'timer' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        if (appState.timer.state === 'running') {
+          recordTimerLap();
+        } else {
+          toggleTimer();
+        }
+      }
+    });
+
+    /* =========================================================
+       8. WORKOUT LOGS & PR MANAGEMENT
+       ========================================================= */
+    function openLogModal(prefill = {}) {
+      document.getElementById('form-log-workout').reset();
+      document.getElementById('log-edit-id').value = '';
+      document.getElementById('log-modal-title').innerText = 'Anotar Marca de Entrenamiento';
+      document.getElementById('log-modal-subtitle').innerText = 'NUEVO REGISTRO';
+
+      // Default Date: today
+      const todayIso = new Date().toISOString().split('T')[0];
+      document.getElementById('log-date').value = todayIso;
+      updateRpeDisplay(8);
+
+      if (prefill.wod) {
+        const sel = document.getElementById('log-wod-select');
+        // Match selection or custom
+        let matched = false;
+        for (let opt of sel.options) {
+          if (opt.value.includes(prefill.wod) || prefill.wod.includes(opt.value)) {
+            sel.value = opt.value;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) sel.value = 'Personalizado / Libre';
+      }
+
+      if (prefill.score) {
+        document.getElementById('log-score').value = prefill.score;
+      }
+
+      document.getElementById('modal-log').classList.remove('hidden');
+    }
+
+    function openLogForWod(wodTitle) {
+      openLogModal({ wod: wodTitle });
+    }
+
+    function closeLogModal() {
+      document.getElementById('modal-log').classList.add('hidden');
+    }
+
+    function updateRpeDisplay(val) {
+      document.getElementById('log-rpe-display').innerText = `${val} / 10`;
+      document.getElementById('log-rpe-slider').value = val;
+    }
+
+    function saveWorkoutLog(e) {
+      e.preventDefault();
+
+      const editId = document.getElementById('log-edit-id').value;
+      const date = document.getElementById('log-date').value;
+      const wod = document.getElementById('log-wod-select').value;
+      const score = document.getElementById('log-score').value.trim();
+      const weight = parseFloat(document.getElementById('log-weight').value) || 0;
+      const rpe = parseFloat(document.getElementById('log-rpe-slider').value) || 8;
+      const isPr = document.getElementById('log-is-pr').checked;
+      const notes = document.getElementById('log-notes').value.trim();
+
+      if (editId) {
+        // Edit existing
+        const index = appState.logs.findIndex(l => l.id === editId);
+        if (index !== -1) {
+          appState.logs[index] = { ...appState.logs[index], date, wod, score, weight, rpe, isPr, notes };
+          showToast('Registro actualizado con éxito', 'success');
+        }
+      } else {
+        // Create new
+        const newLog = {
+          id: 'log_' + Date.now(),
+          date,
+          wod,
+          score,
+          weight,
+          rpe,
+          isPr,
+          notes
+        };
+        appState.logs.unshift(newLog);
+        showToast('¡Sesión registrada correctamente!', 'success');
+
+        if (isPr) {
+          triggerConfetti();
+        }
+      }
+
+      saveLogsToStorage();
+      closeLogModal();
+      updateDashboardStats();
+      renderHistoryTable();
+      renderPrCards();
+      renderAnalyticsChart();
+    }
+
+    function editLog(id) {
+      const log = appState.logs.find(l => l.id === id);
+      if (!log) return;
+
+      document.getElementById('log-edit-id').value = log.id;
+      document.getElementById('log-date').value = log.date;
+      document.getElementById('log-wod-select').value = log.wod;
+      document.getElementById('log-score').value = log.score;
+      document.getElementById('log-weight').value = log.weight || '';
+      updateRpeDisplay(log.rpe || 8);
+      document.getElementById('log-is-pr').checked = !!log.isPr;
+      document.getElementById('log-notes').value = log.notes || '';
+
+      document.getElementById('log-modal-title').innerText = 'Modificar Marca';
+      document.getElementById('log-modal-subtitle').innerText = 'EDITAR REGISTRO';
+      document.getElementById('modal-log').classList.remove('hidden');
+    }
+
+    function deleteLog(id) {
+      const log = appState.logs.find(l => l.id === id);
+      if (!log) return;
+      if (confirm(`¿Eliminar la sesión del día ${log.date} (${log.wod})?`)) {
+        appState.logs = appState.logs.filter(l => l.id !== id);
+        saveLogsToStorage();
+        updateDashboardStats();
+        renderHistoryTable();
+        renderPrCards();
+        renderAnalyticsChart();
+        showToast('Registro eliminado', 'info');
+      }
+    }
+
+    function renderHistoryTable(filteredLogs = null) {
+      const tbody = document.getElementById('logs-table-body');
+      const noLogs = document.getElementById('no-logs-message');
+      if (!tbody) return;
+
+      const logsToDisplay = filteredLogs || appState.logs;
+
+      if (logsToDisplay.length === 0) {
+        tbody.innerHTML = '';
+        noLogs.classList.remove('hidden');
+        return;
+      }
+
+      noLogs.classList.add('hidden');
+      tbody.innerHTML = logsToDisplay.map(log => `
+        <tr class="hover:bg-slate-800/40 transition">
+          <td class="py-3 px-4 whitespace-nowrap text-slate-300 font-mono text-[11px]">${log.date}</td>
+          <td class="py-3 px-4 font-bold text-white">
+            <div class="flex items-center space-x-1.5">
+              <span>${log.wod}</span>
+              ${log.isPr ? '<span class="text-[9px] bg-amber-500/20 text-amber-400 font-black px-1.5 py-0.5 rounded border border-amber-500/30">PR</span>' : ''}
+            </div>
+          </td>
+          <td class="py-3 px-4 text-orange-400 font-bold">${log.score}</td>
+          <td class="py-3 px-4 text-slate-300 font-mono">${log.weight > 0 ? log.weight + ' kg' : 'Peso corporal'}</td>
+          <td class="py-3 px-4">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${log.rpe >= 9 ? 'bg-red-500/10 text-red-400 border border-red-500/30' : log.rpe >= 7.5 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'}">
+              RPE ${log.rpe}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-slate-400 text-[11px] max-w-xs truncate">${log.notes || '—'}</td>
+          <td class="py-3 px-4 text-right whitespace-nowrap space-x-1">
+            <button onclick="editLog('${log.id}')" title="Editar" class="p-1 text-slate-400 hover:text-white transition">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="deleteLog('${log.id}')" title="Eliminar" class="p-1 text-slate-400 hover:text-red-400 transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function filterLogsTable() {
+      const q = document.getElementById('log-search-input').value.toLowerCase();
+      if (!q) {
+        renderHistoryTable();
+        return;
+      }
+      const filtered = appState.logs.filter(l => 
+        l.wod.toLowerCase().includes(q) || 
+        (l.notes && l.notes.toLowerCase().includes(q)) ||
+        l.date.includes(q) ||
+        l.score.toLowerCase().includes(q)
+      );
+      renderHistoryTable(filtered);
+    }
+
+    function renderPrCards() {
+      const container = document.getElementById('pr-cards-container');
+      if (!container) return;
+
+      const prs = appState.logs.filter(l => l.isPr).slice(0, 3);
+
+      if (prs.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full bg-slate-900 border border-slate-800 rounded-xl p-4 text-center text-xs text-slate-400">
+            Aún no has registrado ningún Récord Personal. Marca la casilla "PR" al batir tus números.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = prs.map(pr => `
+        <div class="bg-gradient-to-br from-amber-500/10 via-slate-900 to-slate-900 border border-amber-500/30 rounded-xl p-4 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[10px] font-black uppercase text-amber-400 tracking-wider flex items-center space-x-1">
+              <i data-lucide="award" class="w-3 h-3"></i>
+              <span>PR ESTABLECIDO</span>
+            </span>
+            <span class="text-[10px] font-mono text-slate-400">${pr.date}</span>
+          </div>
+          <h4 class="font-bold text-white text-sm truncate">${pr.wod}</h4>
+          <div class="mt-2 text-xl font-black text-amber-400">${pr.score}</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">Carga: ${pr.weight > 0 ? pr.weight + ' kg' : 'Autocarga'} • RPE: ${pr.rpe}</div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function renderAnalyticsChart() {
+      const ctx = document.getElementById('progressChart');
+      if (!ctx) return;
+
+      // Prepare chronological data (last 10 sessions)
+      const sorted = [...appState.logs].reverse().slice(-10);
+
+      const labels = sorted.map(l => l.date.slice(5)); // 'MM-DD'
+      const rpeData = sorted.map(l => l.rpe);
+      const weightData = sorted.map(l => l.weight || 0);
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Esfuerzo Percibido (RPE)',
+              data: rpeData,
+              borderColor: '#f97316',
+              backgroundColor: 'rgba(249, 115, 22, 0.1)',
+              borderWidth: 3,
+              tension: 0.35,
+              yAxisID: 'yRPE',
+              fill: true
+            },
+            {
+              label: 'Carga Mancuerna / KB (kg)',
+              data: weightData,
+              borderColor: '#10b981',
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              borderDash: [4, 4],
+              tension: 0.2,
+              yAxisID: 'yWeight'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#94a3b8',
+                font: { family: 'Inter', size: 11, weight: 'bold' }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } }
+            },
+            yRPE: {
+              type: 'linear',
+              position: 'left',
+              min: 5,
+              max: 10,
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#f97316', stepSize: 1 }
+            },
+            yWeight: {
+              type: 'linear',
+              position: 'right',
+              min: 0,
+              grid: { drawOnChartArea: false },
+              ticks: { color: '#10b981' }
+            }
+          }
+        }
+      });
+    }
+
+    function exportHistoryCSV() {
+      if (appState.logs.length === 0) {
+        showToast('No hay datos para exportar', 'warning');
+        return;
+      }
+
+      let csv = 'Fecha,WOD,Marca_Score,Carga_kg,RPE,Es_PR,Notas\n';
+      appState.logs.forEach(l => {
+        const safeNotes = `"${(l.notes || '').replace(/"/g, '""')}"`;
+        const safeScore = `"${(l.score || '').replace(/"/g, '""')}"`;
+        csv += `${l.date},"${l.wod}",${safeScore},${l.weight},${l.rpe},${l.isPr ? 'SI' : 'NO'},${safeNotes}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `dadhours_history_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('CSV generado y descargado', 'success');
+    }
+
+    /* =========================================================
+       9. NUTRITION & SHOPPING LIST
+       ========================================================= */
+    function renderShoppingList() {
+      const container = document.getElementById('shopping-list-container');
+      if (!container) return;
+
+      // Group by category
+      const categories = [...new Set(appState.shoppingList.map(item => item.category))];
+
+      let completedCount = 0;
+      let totalCount = appState.shoppingList.length;
+
+      container.innerHTML = categories.map(cat => {
+        const items = appState.shoppingList.filter(i => i.category === cat);
+        return `
+          <div class="space-y-1.5">
+            <h5 class="text-[11px] font-black uppercase text-slate-400 tracking-wider">${cat}</h5>
+            <div class="space-y-1">
+              ${items.map(item => {
+                if (item.checked) completedCount++;
+                return `
+                  <label class="flex items-center space-x-2.5 p-2 rounded-lg bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 cursor-pointer select-none transition">
+                    <input type="checkbox" onchange="toggleShoppingItem('${item.id}')" ${item.checked ? 'checked' : ''} class="w-4 h-4 rounded accent-emerald-500 bg-slate-900 border-slate-700 cursor-pointer">
+                    <span class="text-xs ${item.checked ? 'line-through text-slate-500 font-normal' : 'text-slate-200 font-medium'}">${item.name}</span>
+                  </label>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('shopping-progress-text').innerText = `${completedCount} / ${totalCount} completados`;
+      lucide.createIcons();
+    }
+
+    function toggleShoppingItem(itemId) {
+      const item = appState.shoppingList.find(i => i.id === itemId);
+      if (item) {
+        item.checked = !item.checked;
+        saveShoppingToStorage();
+        renderShoppingList();
+      }
+    }
+
+    function resetShoppingList() {
+      appState.shoppingList.forEach(i => i.checked = false);
+      saveShoppingToStorage();
+      renderShoppingList();
+      showToast('Casillas de compra desmarcadas', 'info');
+    }
+
+    /* =========================================================
+       10. BACKUP & SYSTEM TOOLS
+       ========================================================= */
+    function openBackupModal() {
+      document.getElementById('modal-backup').classList.remove('hidden');
+    }
+
+    function closeBackupModal() {
+      document.getElementById('modal-backup').classList.add('hidden');
+    }
+
+    function exportJSONBackup() {
+      const backupData = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        logs: appState.logs,
+        shoppingList: appState.shoppingList
+      };
+
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', `dadhours_backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('Copia de seguridad JSON descargada', 'success');
+    }
+
+    function importJSONBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (Array.isArray(data.logs)) {
+            appState.logs = data.logs;
+            saveLogsToStorage();
+          }
+          if (Array.isArray(data.shoppingList)) {
+            appState.shoppingList = data.shoppingList;
+            saveShoppingToStorage();
+          }
+          closeBackupModal();
+          updateDashboardStats();
+          renderHistoryTable();
+          renderPrCards();
+          renderAnalyticsChart();
+          renderShoppingList();
+          showToast('Backup restaurado con éxito', 'success');
+        } catch (err) {
+          showToast('Error al procesar el archivo JSON', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function confirmResetData() {
+      if (confirm('¿Restablecer datos de ejemplo? Esto reemplazará las marcas actuales por el set inicial.')) {
+        appState.logs = [...SAMPLE_LOGS];
+        appState.shoppingList = [...DEFAULT_SHOPPING_ITEMS];
+        saveLogsToStorage();
+        saveShoppingToStorage();
+        closeBackupModal();
+        updateDashboardStats();
+        renderHistoryTable();
+        renderPrCards();
+        renderAnalyticsChart();
+        renderShoppingList();
+        showToast('Datos de ejemplo cargados', 'info');
+      }
+    }
+
+    /* =========================================================
+       11. TOASTS & CELEBRATION
+       ========================================================= */
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-950/90 text-emerald-200 border-emerald-500/40',
+        warning: 'bg-amber-950/90 text-amber-200 border-amber-500/40',
+        error: 'bg-red-950/90 text-red-200 border-red-500/40',
+        info: 'bg-slate-900/90 text-slate-200 border-slate-700'
+      };
+
+      toast.className = `pointer-events-auto flex items-center space-x-2 px-4 py-2.5 rounded-xl border text-xs font-semibold shadow-2xl backdrop-blur-md transition-all transform translate-y-2 opacity-0 duration-300 ${colors[type] || colors.info}`;
+      toast.innerHTML = `
+        <span class="w-2 h-2 rounded-full ${type === 'success' ? 'bg-emerald-400' : type === 'warning' ? 'bg-amber-400' : type === 'error' ? 'bg-red-400' : 'bg-orange-400'}"></span>
+        <span>${message}</span>
+      `;
+
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.65 },
+          colors: ['#f97316', '#10b981', '#fbbf24']
+        });
+      }
+    }
+
+    /* =========================================================
+       12. INITIALIZATION ON LOAD
+       ========================================================= */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPersistedData();
+      renderWeeklyCards();
+      updateDashboardStats();
+      renderShoppingList();
+      updateTimerDisplay();
+      updateLapCountDisplay();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
